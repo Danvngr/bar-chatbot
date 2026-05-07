@@ -1,0 +1,32 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Secure AI Restaurant Chatbot backend",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "seed:invite-codes": "node seedInviteCodes.js",
+    "unlink-admin": "node scripts/unlink-admin-from-restaurant.js",
+    "topic-sweep": "node scripts/run-topic-sweep.js",
+    "pilot:check": "node scripts/run-pilot-conversation-check.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.13.6",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "firebase-admin": "^13.7.0",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.2",
+    "morgan": "^1.10.1",
+    "openai": "^6.25.0",
+    "winston": "^3.19.0"
+  }
+}

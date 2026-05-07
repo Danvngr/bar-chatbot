@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function tenantId() {
+      return request.auth.token.restaurant_id;
+    }
+
+    match /restaurants/{restaurantId} {
+      allow read, write: if isSignedIn() && tenantId() == restaurantId;
+
+      match /Knowledge_Base/{docId} {
+        allow read, write: if isSignedIn() && tenantId() == restaurantId;
+      }
+    }
+
+    match /sessions/{sessionId} {
+      allow read, write: if isSignedIn() && resource.data.restaurant_id == tenantId();
+    }
+
+    match /unanswered_questions/{questionId} {
+      allow read, write: if isSignedIn() && resource.data.restaurant_id == tenantId();
+      allow create: if isSignedIn() && request.resource.data.restaurant_id == tenantId();
+    }
+  }
+}
