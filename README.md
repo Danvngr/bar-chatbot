@@ -1,75 +1,161 @@
-# Secure AI Restaurant Chatbot (RAG SaaS)
+# Secure AI Restaurant Chatbot
 
-Production-grade multi-tenant WhatsApp chatbot for restaurants with strict domain guardrails, human handoff, and learning loop.
+A production-ready WhatsApp chatbot platform for restaurants and hospitality businesses.
 
-## Stack
+The system helps businesses answer customer questions automatically, manage their own knowledge base, transfer conversations to a human representative when needed, and keep each business fully separated in a multi-tenant environment.
 
-- Backend: Node.js + Express
-- Auth/Data: Firebase Auth + Firestore
-- Retrieval: Firestore Native Vector Search
-- LLM: OpenAI `gpt-4o-mini` + `text-embedding-3-small`
-- Frontend: React + Vite + Tailwind
-- Process manager: PM2
+## What It Does
+
+- Answers customer questions on WhatsApp using the restaurant's own saved information
+- Supports multiple businesses from the same backend
+- Uses RAG to keep answers grounded in the business knowledge base
+- Transfers customers to a human representative when the bot should not answer alone
+- Sends human handoff alerts through Telegram
+- Includes an admin bot for onboarding and knowledge management
+- Logs unanswered questions so the business can improve the bot over time
+- Protects each restaurant's data with Firebase Auth and Firestore security rules
+
+## Tech Stack
+
+- Backend: Node.js, Express
+- Database: Firebase Firestore
+- Authentication: Firebase Auth
+- AI: OpenAI chat models and embeddings
+- Retrieval: Firestore vector search
+- Frontend: React, Vite
+- Messaging: WhatsApp Cloud API, Telegram Bot API
+- Production process manager: PM2
 
 ## Project Structure
 
-- `backend`: API server, webhook, RAG pipeline, onboarding provisioning
-- `frontend`: admin dashboard
-- `firestore.rules`: tenant isolation rules
+```text
+restaurant-chatbot/
+├── backend/          # API server, webhooks, AI logic, RAG, onboarding, Telegram handoff
+├── frontend/         # Admin dashboard
+├── firestore.rules   # Firestore security rules
+└── README.md
+```
 
 ## Backend Setup
 
-1. Copy `backend/.env.example` to `backend/.env` and fill all values.
+1. Go to the backend folder:
+
+```bash
+cd backend
+```
+
 2. Install dependencies:
-   - `cd backend`
-   - `npm install`
-3. Run in development:
-   - `npm run dev`
-4. Run in production:
-   - `npm run start`
+
+```bash
+npm install
+```
+
+3. Create your environment file:
+
+```bash
+cp .env.example .env
+```
+
+4. Fill in the required values in `.env`, including Firebase, OpenAI, WhatsApp, and Telegram credentials.
+
+5. Start the backend in development:
+
+```bash
+npm run dev
+```
+
+For production:
+
+```bash
+npm start
+```
 
 ## Frontend Setup
 
-1. Copy `frontend/.env.example` to `frontend/.env`.
+1. Go to the frontend folder:
+
+```bash
+cd frontend
+```
+
 2. Install dependencies:
-   - `cd frontend`
-   - `npm install`
-3. Start dev server:
-   - `npm run dev`
-4. Build:
-   - `npm run build`
 
-## Key Security Controls
+```bash
+npm install
+```
 
-- WhatsApp webhook signature verification (`X-Hub-Signature-256`)
-- Rate limiting on webhook and admin APIs
-- Firebase Auth protected admin endpoints
-- Firestore tenant isolation with `restaurant_id` claim
-- Secrets only via environment variables
+3. Create your environment file:
 
-## Core Flow
+```bash
+cp .env.example .env
+```
 
-1. Webhook receives message, validates signature, returns `200 OK` immediately.
-2. Async worker loads session and checks status:
-   - `HUMAN_ACTIVE`: store message and stop.
-   - `BOT_ACTIVE`: continue with RAG.
-3. RAG pulls top knowledge chunks for the restaurant.
-4. Prompt enforces strict in-domain response policy.
-5. If model returns `TRANSFER_TO_HUMAN`:
-   - switch session to `HUMAN_ACTIVE`
-   - store unanswered question
-   - notify admin
-6. Otherwise send WhatsApp response and store message.
+4. Start the development server:
 
-## PM2 (VPS)
+```bash
+npm run dev
+```
 
-From `backend`:
+5. Build for production:
 
-- `pm2 start ecosystem.config.js --env production`
-- `pm2 save`
-- `pm2 startup`
+```bash
+npm run build
+```
+
+## Core Customer Flow
+
+1. A customer sends a WhatsApp message.
+2. The webhook verifies the request and loads the correct restaurant.
+3. The system checks the customer session state.
+4. If the bot is active, it searches the restaurant's knowledge base.
+5. The AI generates a response using relevant business information.
+6. If the bot should not answer alone, the conversation is transferred to a human representative.
+7. The representative receives the alert in Telegram.
+8. Unanswered or unclear questions can be reviewed and added back into the knowledge base.
+
+## Human Handoff
+
+The bot does not try to answer every question at all costs.
+
+When a question is sensitive, unclear, missing important information, or requires human judgment, the system can move the conversation to a human representative. Telegram is used for internal alerts, which keeps operational communication separate from the customer-facing WhatsApp conversation.
+
+## Admin Bot
+
+The admin bot helps the business owner:
+
+- Complete onboarding
+- Add new business information
+- Edit existing knowledge
+- View saved questions and answers
+- Connect a Telegram group for human handoff alerts
+- Improve the bot over time
+
+## Security
+
+The system includes several security controls:
+
+- WhatsApp webhook signature verification
+- Firebase Auth for protected admin access
+- Firestore tenant isolation
+- Environment-based secrets
+- Rate limiting
+- Strict response guardrails to prevent off-topic or invented answers
+
+## Production Deployment
+
+The backend can be run on a VPS using PM2.
+
+From the `backend` folder:
+
+```bash
+pm2 start ecosystem.config.js --env production
+pm2 save
+pm2 startup
+```
 
 ## Notes
 
-- Firestore Vector Search requires vector index support enabled in your project.
-- For each admin user, set Firebase custom claim `restaurant_id` to enforce tenancy.
+- Firestore vector search must be enabled in the Firebase project.
+- Each admin user should have the correct `restaurant_id` custom claim.
+- Secrets should never be committed to Git.
+- Use `.env.example` as a template only.
